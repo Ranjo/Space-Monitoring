@@ -1,7 +1,14 @@
 ﻿$disk = Get-WmiObject Win32_LogicalDisk -Filter "DeviceID='G:'" |
 Select-Object Size,FreeSpace
+function DeketeFiles($location, $DaysRetain){
+Write-Warning "Creating Space"
 
-$FullDir = 'Your folder path'
+Get-ChildItem $location | Where-Object {$_.PSIsContainer -eq $FALSE} >> $PathLog 
+Get-ChildItem $location | Where-Object {$_.PSIsContainer -eq $TRUE -AND $_.LastWriteTime -le $DaysRetain} | Remove-Item -Recurse -Force >> $PathLog
+Get-ChildItem $location | Where-Object {$_.PSIsContainer -eq $FALSE -AND $_.LastWriteTime -le $DaysRetain} | Remove-Item -Recurse -Force >> $PathLog 
+
+}
+#$FullDir = 'Your folder path'
 #Number of days that should be retained
 $DaysRefLogs = (Get-Date).AddDays("-7")
 
@@ -32,23 +39,11 @@ $SMTPClient.Credentials = New-Object System.Net.NetworkCredential("Username@exam
 #Check if space is available
 if($Freespace -lt $FreespaceG )
 {
+DeleteFiles "Location Dir" "Days to retain"
 #Get Current Date
 Write-Output "As at: $DateT" >> $PathLog
 
 #$Body = $null
-
-Write-Warning "Creating Space"
-
-
-#Delete Logs older than 7 Days
-Get-ChildItem $LogDir | Where-Object {$_.PSIsContainer -eq $FALSE} >> $PathLog 
-Get-ChildItem $LogDir | Where-Object {$_.PSIsContainer -eq $TRUE -AND $_.LastWriteTime -le $DaysRef} | Remove-Item -Recurse -Force >> $PathLog
-Get-ChildItem $LogDir | Where-Object {$_.PSIsContainer -eq $FALSE -AND $_.LastWriteTime -le $DaysRef} | Remove-Item -Recurse -Force >> $PathLog 
-
-#Delete Full older than 3 days
-Get-ChildItem $FullDir | Where-Object {$_.PSIsContainer -eq $FALSE} >> $PathLog
-Get-ChildItem $FullDir | Where-Object {$_.PSIsContainer -eq $TRUE -AND $_.LastWriteTime -le $DaysRefFull} | Remove-Item -Recurse -Force  >> $PathLog 
-Get-ChildItem $FullDir | Where-Object {$_.PSIsContainer -eq $FALSE -AND $_.LastWriteTime -le $DaysRefFull} | Remove-Item -Recurse -Force  >> $PathLog 
 
 #$Gb = ($Freespace/1Gb).ToString("00")
 $Gb = (($disk.Freespace)/1Gb).ToString("00")
